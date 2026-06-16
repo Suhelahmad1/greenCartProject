@@ -21,6 +21,7 @@ await connectCloudinary();
 const allowedOrigins = [
   "http://localhost:5173",
   "https://greencart-frontend-wine.vercel.app",
+  "https://greencart-frontend-gjpck95yq-suhel-ahmads-projects.vercel.app",
 ];
 
 app.post("/stripe", express.raw({ type: "application/json" }), stripeWebhooks);
@@ -28,7 +29,27 @@ app.post("/stripe", express.raw({ type: "application/json" }), stripeWebhooks);
 // middleware configuration
 app.use(express.json());
 app.use(cookieParser());
-app.use(cors({ origin: allowedOrigins, credentials: true }));
+
+// Pro-level CORS configuration jo dynamic aur production URLs dono ko handle karega
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // Postman ya bina origin ki requests ko allow karne ke liye !origin check zaroori hai
+      if (
+        !origin ||
+        allowedOrigins.includes(origin) ||
+        origin.endsWith(".vercel.app")
+      ) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
+  }),
+);
 
 app.get("/", (req, res) => res.send("API is working"));
 app.use("/api/user", userRouter);
